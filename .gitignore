@@ -1,0 +1,38 @@
+# macOS metadata.
+.DS_Store
+
+# Python artifacts.
+__pycache__/
+*.pyc
+
+# Raw Wispr Flow / Electron app data. The canonical export should be generated
+# from this data, not commit the app's private runtime folder directly.
+Wispr Flow Data Copy/
+Wispr Flow/
+
+# Source database snapshots and SQLite sidecars.
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-wal
+*.db-shm
+
+# App auth/session/runtime files that should not be part of the transcript export.
+session.json
+Cookies
+Cookies-journal
+Local Storage/
+Session Storage/
+sentry/
+Cache/
+Code Cache/
+GPUCache/
+DawnWebGPUCache/
+DawnGraphiteCache/
+Crashpad/
+
+# Local exporter scratch space.
+.wisprsync-cache/
+.wisprsync/
+tmp/

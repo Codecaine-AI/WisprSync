@@ -1,0 +1,4 @@
+interface:
+  display_name: "WisprSync"
+  short_description: "Export Wispr Flow transcripts"
+  default_prompt: "Use $wisprsync to set up this repo and sync my Wispr Flow transcripts."
