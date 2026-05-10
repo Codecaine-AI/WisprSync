@@ -16,6 +16,7 @@ def add_export_like_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--no-screenshots", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--limit", type=int)
+    parser.add_argument("--allow-unsafe-output", action="store_true")
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -27,6 +28,7 @@ def build_parser() -> argparse.ArgumentParser:
     setup.add_argument("--output", default="data")
     setup.add_argument("--yes", action="store_true")
     setup.add_argument("--no-screenshots", action="store_true")
+    setup.add_argument("--allow-unsafe-output", action="store_true")
     setup.set_defaults(func=command_setup)
 
     export = subparsers.add_parser("export")

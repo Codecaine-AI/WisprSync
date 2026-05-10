@@ -7,6 +7,7 @@ from wisprsync.core.config import choose_source, load_config
 from wisprsync.core.constants import DICTIONARY_COLUMNS, SCHEMA_VERSION
 from wisprsync.core.errors import WisprSyncError
 from wisprsync.core.paths import relative_to_output, repo_root, resolve_output
+from wisprsync.core.safety import ensure_child, validate_export_paths
 from wisprsync.export.indexes import (
     dictionary_row_to_object,
     history_index_object,
@@ -27,6 +28,7 @@ def command_export(args: Any) -> int:
     source_value = args.source or config.get("source_database")
     source = choose_source(source_value)
     output = resolve_output(root, args.output or config.get("output_directory") or "data")
+    validate_export_paths(root, source, output, getattr(args, "allow_unsafe_output", False))
     include_screenshots = config.get("include_screenshots", True)
     if args.include_screenshots:
         include_screenshots = True
@@ -115,8 +117,10 @@ def command_export(args: Any) -> int:
                     action = "unchanged"
                 else:
                     action = "updated" if old_dir else "created"
+                    ensure_child(output / "records", record_dir, "record directory")
                     write_record(record_dir, metadata, row, blobs)
                     if old_dir and old_dir != record_dir and old_dir.exists():
+                        ensure_child(output / "records", old_dir, "old record directory")
                         shutil.rmtree(old_dir)
 
                 if action == "created":

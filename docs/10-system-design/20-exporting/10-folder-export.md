@@ -85,9 +85,13 @@ Hashes are only there to make repeat exports practical and check the files that 
 
 The exporter should stop instead of guessing if it sees an unsafe state:
 
+- output paths that overlap the source database, Wispr Flow app data, the
+  WisprSync repo root, or WisprSync private state directories,
 - duplicate `transcriptEntityId` values in the source,
 - two source rows resolving to the same record path,
 - an existing record path whose `metadata.json` contains a different ID,
 - duplicate IDs in `indexes/history.jsonl`.
 
 These are hard failures because choosing a winner could corrupt the exported data.
+Expert users can pass `--allow-unsafe-output` to intentionally use an
+unsafe-looking output location, except when the output path is already a file.

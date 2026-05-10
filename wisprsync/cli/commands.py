@@ -7,6 +7,7 @@ import sys
 from wisprsync.core.config import choose_source, load_config, write_config
 from wisprsync.core.constants import SCHEMA_VERSION
 from wisprsync.core.paths import config_path, repo_root, resolve_output
+from wisprsync.core.safety import validate_export_paths
 from wisprsync.export.runner import command_export
 from wisprsync.source.discovery import discover_sources
 from wisprsync.validate.runner import command_validate
@@ -29,6 +30,8 @@ def command_setup(args: argparse.Namespace) -> int:
             output = out_reply
         shot_reply = input("Include screenshots? [Y/n] ").strip().lower()
         include_screenshots = shot_reply not in {"n", "no"}
+
+    validate_export_paths(root, source, resolve_output(root, output), getattr(args, "allow_unsafe_output", False))
 
     config = {
         "schema_version": SCHEMA_VERSION,

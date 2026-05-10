@@ -4,7 +4,13 @@ WisprSync exports your local Wispr Flow transcript data into a folder you contro
 
 It is built for people who want direct access to their own transcript history, audio files, metadata, and indexes without manually exporting one item at a time.
 
-**WisprSync is not affiliated with, endorsed by, or supported by Wispr Flow.**
+## Unofficial Project
+
+WisprSync is an independent, unofficial project. 
+
+It is not affiliated with, endorsed by, sponsored by, or supported by Wispr AI, Inc. or Wispr Flow.
+
+`Wispr` and `Wispr Flow` are trademarks or product names of their respective owners. They are used here only to identify the application whose local data this tool helps a user export from their own machine.
 
 Use it at your own risk.
 
@@ -103,6 +109,10 @@ Files are omitted when the source row does not contain the corresponding value.
 
 - Do not commit raw Wispr Flow app folders, cookies, sessions, caches, or SQLite source snapshots.
 - Do not commit `.wisprsync/config.json`.
+- WisprSync blocks unsafe output paths by default, including paths inside the
+  source database directory, Wispr Flow app data, the repo root, or private
+  `.wisprsync` state. Use `--allow-unsafe-output` only for intentional expert
+  workflows.
 - Be careful publishing exported `data/`; it may contain private transcripts, URLs, screenshots, and audio.
 - Prefer a private repo or a private cloud-synced folder for personal exports.
 
@@ -118,3 +128,7 @@ Key docs:
 - [Folder Export](docs/10-system-design/20-exporting/10-folder-export.md)
 - [GitHub Git Export](docs/10-system-design/20-exporting/20-github-git-export.md)
 - [Setup Workflow](docs/20-implementation/99-appendix/10-setup-workflow.md)
+
+## License
+
+WisprSync is released under the [MIT License](LICENSE).

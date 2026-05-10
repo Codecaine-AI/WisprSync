@@ -4,6 +4,7 @@ from typing import Any
 
 from wisprsync.core.config import load_config
 from wisprsync.core.paths import repo_root, resolve_output
+from wisprsync.core.safety import unsafe_output_reasons
 from wisprsync.export.records import build_existing_index
 from wisprsync.validate.checks import (
     print_validation,
@@ -20,6 +21,10 @@ def command_validate(args: Any) -> int:
     output = resolve_output(root, args.output or config.get("output_directory") or "data")
     errors: list[str] = []
     warnings: list[str] = []
+    source = config.get("source_database")
+    if source:
+        for reason in unsafe_output_reasons(root, source, output):
+            warnings.append(f"unsafe-looking output path: {reason}")
 
     manifest = read_manifest(output / "manifest.json", errors)
     if manifest is None:
