@@ -1,12 +1,12 @@
 ---
-covers: The exporting design section for folder export, optional GitHub sync, and future export targets.
-concepts: [exporting, folder-export, git-sync, targets]
+covers: The exporting design section for folder export and future extension ideas.
+concepts: [exporting, folder-export, targets]
 type: overview
 ---
 
 # Exporting
 
-Exporting starts with the simplest useful behavior: write the canonical WisprSync data tree to a folder the user specifies. Other sync options should wrap that folder export instead of changing the core record, index, manifest, and run-report structure.
+Exporting writes the canonical WisprSync data tree to a folder the user specifies. If the user wants cloud sync, they can choose a folder already managed by Dropbox, iCloud Drive, Google Drive, OneDrive, or another sync tool.
 
 ---
 
@@ -16,7 +16,6 @@ Exporting starts with the simplest useful behavior: write the canonical WisprSyn
 20-exporting/
 ├── 00-overview.md                  (this file)
 ├── 10-folder-export.md             Write the export to a specified local folder
-├── 20-github-git-export.md         Optional Git/GitHub sync layered on top of folder export
 └── 30-export-targets.md            Extension model for future remote targets
 ```
 
@@ -26,10 +25,6 @@ Exporting starts with the simplest useful behavior: write the canonical WisprSyn
 
 The base mode writes to a user-specified folder. This is the default and should remain the lowest-friction path. For easy cloud backup, the recommended output folder can live inside a normal cloud-synced directory such as Dropbox, iCloud Drive, Google Drive, or OneDrive.
 
-### [GitHub Git Export](20-github-git-export.md)
-
-The Git/GitHub mode treats GitHub as the cloud sync layer. It should be a separate layer that commits and pushes the folder export, not a replacement for the folder export.
-
 ### [Export Targets](30-export-targets.md)
 
-Future targets, such as S3 or another remote store, should plug in after the folder export contract is clear. The source reading and canonical data shape should stay shared.
+Future targets, such as GitHub, S3, webhooks, or another remote store, are not implemented today. If they are added later, they should plug in after folder export without changing the source reading or canonical data shape.

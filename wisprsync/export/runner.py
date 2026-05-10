@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import shutil
+from pathlib import Path
 from typing import Any
 
 from wisprsync.core.config import choose_source, load_config
@@ -12,6 +14,7 @@ from wisprsync.export.indexes import (
     dictionary_row_to_object,
     history_index_object,
     print_run_summary,
+    retained_history_index_object,
     write_run_report,
 )
 from wisprsync.export.metadata import build_metadata
@@ -27,7 +30,10 @@ def command_export(args: Any) -> int:
     config = load_config(root)
     source_value = args.source or config.get("source_database")
     source = choose_source(source_value)
-    output = resolve_output(root, args.output or config.get("output_directory") or "data")
+    output_value = args.output or config.get("output_directory")
+    if not output_value:
+        raise WisprSyncError("export requires --output or a configured output_directory; run setup first")
+    output = resolve_output(root, output_value)
     validate_export_paths(root, source, output, getattr(args, "allow_unsafe_output", False))
     include_screenshots = config.get("include_screenshots", True)
     if args.include_screenshots:
@@ -80,6 +86,7 @@ def command_export(args: Any) -> int:
                 run_report["errors"].extend(preflight_errors)
                 raise WisprSyncError("preflight failed")
 
+            previous_missing_since = read_previous_missing_since(indexes_dir / "history.jsonl")
             history_rows: list[dict[str, Any]] = []
             source_ids: set[str] = set()
             min_timestamp = None
@@ -143,6 +150,18 @@ def command_export(args: Any) -> int:
 
             missing = sorted(set(existing_index) - source_ids)
             run_report["results"]["records_missing_from_source"] = len(missing)
+            retained_missing_count = 0
+            for record_id in missing:
+                record_dir = existing_index[record_id]
+                try:
+                    metadata = json.loads((record_dir / "metadata.json").read_text(encoding="utf-8"))
+                except Exception as exc:
+                    run_report["errors"].append(f"could not retain missing record {record_id}: {exc}")
+                    run_report["results"]["errors"] += 1
+                    continue
+                missing_since = previous_missing_since.get(record_id) or run_id
+                history_rows.append(retained_history_index_object(metadata, record_dir, output, missing_since))
+                retained_missing_count += 1
 
             dictionary_rows: list[dict[str, Any]] = []
             if has_table(conn, "Dictionary"):
@@ -167,6 +186,10 @@ def command_export(args: Any) -> int:
                     },
                     "counts": {
                         "history_rows": len(history_rows),
+                        "source_history_rows": len(source_ids),
+                        "active_records": len(source_ids),
+                        "retained_missing_from_source_records": retained_missing_count,
+                        "total_records": len(history_rows),
                         "records": len(history_rows),
                         "records_with_audio": records_with_audio,
                         "records_with_screenshot": records_with_screenshot,
@@ -209,3 +232,21 @@ def command_export(args: Any) -> int:
 
     print_run_summary(run_report, output)
     return 0 if run_report["status"] in {"success", "dry_run"} else 1
+
+
+def read_previous_missing_since(history_path: Path) -> dict[str, str]:
+    if not history_path.exists():
+        return {}
+    result: dict[str, str] = {}
+    for line in history_path.read_text(encoding="utf-8").splitlines():
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if row.get("source_status") != "missing_from_source":
+            continue
+        record_id = row.get("id")
+        missing_since = row.get("missing_from_source_since_run_id")
+        if record_id and missing_since:
+            result[record_id] = missing_since
+    return result

@@ -17,7 +17,7 @@ If transcript data is already on the user's device, the user should be able to i
 ## Local First
 
 The base export path writes to a folder the user controls.
-Cloud sync, Git sync, or future remote targets should layer on top of that folder export instead of replacing it.
+Cloud sync or future remote targets should layer on top of that folder export instead of replacing it.
 
 ## Transparent Formats
 

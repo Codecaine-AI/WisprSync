@@ -17,11 +17,15 @@ def history_index_object(
     paths: dict[str, Any],
     record_dir: Path,
     output: Path,
+    source_status: str = "current",
+    missing_from_source_since_run_id: str | None = None,
 ) -> dict[str, Any]:
     timestamp_utc = parse_timestamp(row.get("timestamp"))
     return {
         "schema_version": SCHEMA_VERSION,
         "id": row.get("transcriptEntityId"),
+        "source_status": source_status,
+        "missing_from_source_since_run_id": missing_from_source_since_run_id,
         "timestamp_utc": iso_z(timestamp_utc) if timestamp_utc else None,
         "date_utc": timestamp_utc.date().isoformat() if timestamp_utc else None,
         "status": row.get("status"),
@@ -47,6 +51,58 @@ def history_index_object(
         "metadata_path": paths["metadata_path"],
         "record_path": relative_to_output(record_dir, output),
         "source_row_sha256": metadata["integrity"]["source_row_sha256"],
+    }
+
+
+def retained_history_index_object(
+    metadata: dict[str, Any],
+    record_dir: Path,
+    output: Path,
+    missing_from_source_since_run_id: str,
+) -> dict[str, Any]:
+    timestamp_utc = parse_timestamp(metadata.get("timestamps", {}).get("timestamp_utc"))
+    files = metadata.get("files", {})
+    media = metadata.get("media", {})
+    text = metadata.get("text", {})
+    text_stats = metadata.get("text_stats", {})
+    context = metadata.get("context", {})
+    status = metadata.get("status", {})
+    integrity = metadata.get("integrity", {})
+
+    def rel(name: str) -> str | None:
+        value = files.get(name)
+        return relative_to_output(record_dir / value, output) if value else None
+
+    return {
+        "schema_version": metadata.get("schema_version", SCHEMA_VERSION),
+        "id": metadata.get("id"),
+        "source_status": "missing_from_source",
+        "missing_from_source_since_run_id": missing_from_source_since_run_id,
+        "timestamp_utc": iso_z(timestamp_utc) if timestamp_utc else None,
+        "date_utc": timestamp_utc.date().isoformat() if timestamp_utc else None,
+        "status": status.get("wispr_status"),
+        "app": context.get("app"),
+        "url": context.get("url"),
+        "num_words": text_stats.get("num_words"),
+        "duration_seconds": text_stats.get("duration_seconds"),
+        "speech_duration_seconds": text_stats.get("speech_duration_seconds"),
+        "asr_text": text.get("asr"),
+        "formatted_text": text.get("formatted"),
+        "edited_text": text.get("edited"),
+        "pasted_text": text.get("pasted"),
+        "default_asr_text": text.get("default_asr"),
+        "fallback_asr_text": text.get("fallback_asr"),
+        "default_formatted_text": text.get("default_formatted"),
+        "fallback_formatted_text": text.get("fallback_formatted"),
+        "raw_transcript_path": rel("raw_transcript"),
+        "formatted_transcript_path": rel("formatted_transcript"),
+        "audio_path": rel("audio"),
+        "audio_sha256": media.get("audio", {}).get("sha256"),
+        "screenshot_path": rel("screenshot"),
+        "screenshot_sha256": media.get("screenshot", {}).get("sha256"),
+        "metadata_path": relative_to_output(record_dir / "metadata.json", output),
+        "record_path": relative_to_output(record_dir, output),
+        "source_row_sha256": integrity.get("source_row_sha256"),
     }
 
 

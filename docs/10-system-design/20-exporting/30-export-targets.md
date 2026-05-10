@@ -1,12 +1,14 @@
 ---
-covers: The extension model for adding export targets beyond the default folder export.
+covers: Future extension ideas beyond the default folder export.
 concepts: [export-targets, extensibility, remote-sync]
 depends-on: [10-system-design/20-exporting/10-folder-export.md]
 ---
 
-# Export Targets
+# Future Export Targets
 
-Export targets should be modular layers around the same canonical data shape. The source reader and folder writer establish the base contract; optional targets can add publishing behavior without changing record contents.
+WisprSync does not currently implement remote targets, webhooks, Git pushes, or provider-specific upload logic. The supported behavior is folder export only.
+
+Future export targets should be modular layers around the same canonical data shape. The source reader and folder writer establish the base contract; optional future targets can add publishing behavior without changing record contents.
 
 ---
 
@@ -18,7 +20,7 @@ The shared pipeline is:
 Wispr Flow SQLite
   -> canonical records and indexes
   -> folder export
-  -> optional target sync
+  -> optional future target sync
 ```
 
 The folder export is the base target because every remote target still needs a concrete set of files to publish.
@@ -29,7 +31,8 @@ The folder export is the base target because every remote target still needs a c
 | --- | --- | --- |
 | Folder | Supported base design | Write files to a specified local folder. |
 | Cloud-synced folder | Supported by folder export | User chooses a Dropbox, iCloud Drive, Google Drive, or OneDrive folder. |
-| GitHub through Git | Planned/optional layer | Commit and push the folder export to a Git remote. |
+| GitHub through Git | Future extension idea | Commit and push the folder export to a Git remote. |
+| Webhook or command hook | Future extension idea | Run a user-defined action after a successful folder export. |
 | S3 or object storage | Future extension | Upload the canonical files to a bucket or object store. |
 
 ## Target Boundary

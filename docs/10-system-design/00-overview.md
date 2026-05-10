@@ -16,7 +16,7 @@ The system design layer documents WisprSync as a data model and export process, 
 10-system-design/
 ├── 00-overview.md              (this file)
 ├── 10-data-structure/          Wispr Flow source shape and WisprSync output shape
-└── 20-exporting/               Folder export, GitHub sync, and future export targets
+└── 20-exporting/               Folder export and future export target ideas
 ```
 
 ## Design Scope
@@ -43,4 +43,4 @@ Explains the source and output data shapes as separate design documents: what ex
 
 ### [Exporting](20-exporting/00-overview.md)
 
-Explains the default folder export, optional Git/GitHub sync, and how future targets can be layered without changing the canonical data shape.
+Explains the default folder export and how future targets could be layered without changing the canonical data shape.

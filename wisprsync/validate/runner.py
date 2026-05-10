@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from wisprsync.core.config import load_config
+from wisprsync.core.errors import WisprSyncError
 from wisprsync.core.paths import repo_root, resolve_output
 from wisprsync.core.safety import unsafe_output_reasons
 from wisprsync.export.records import build_existing_index
@@ -18,7 +19,10 @@ from wisprsync.validate.checks import (
 def command_validate(args: Any) -> int:
     root = repo_root()
     config = load_config(root)
-    output = resolve_output(root, args.output or config.get("output_directory") or "data")
+    output_value = args.output or config.get("output_directory")
+    if not output_value:
+        raise WisprSyncError("validate requires --output or a configured output_directory; run setup first")
+    output = resolve_output(root, output_value)
     errors: list[str] = []
     warnings: list[str] = []
     source = config.get("source_database")

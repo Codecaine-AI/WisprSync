@@ -12,14 +12,28 @@ WisprSync is repo-local first: do not require a global `wisprsync`, `npx`, or
 
 ## Workflow
 
+When this skill runs, sync and the rest can be one shot — but **setup must be agent-driven with explicit gates**, because `./bin/setup`'s interactive prompts only work when a human runs them in a real TTY. Agent shells are not TTYs, so the prompts are silently skipped and the user is never asked where their data should go. Use the gated flow below instead, then call setup non-interactively with all answers as flags.
+
 1. Confirm the current directory is the WisprSync repo root.
-2. If `.wisprsync/config.json` is missing, set up the repo:
-   - Run `./bin/setup`.
-   - Follow `docs/20-implementation/99-appendix/10-setup-workflow.md` when troubleshooting or extending setup behavior.
-3. Confirm the selected source database is the user's Wispr Flow database.
-4. Confirm the output directory, usually `data`.
-5. Run `./bin/sync` to export and validate.
-6. Summarize counts from `data/manifest.json` and the latest run report.
+2. If `.wisprsync/config.json` exists, ask the user whether to reuse it or reconfigure. Skip to step 7 if reusing.
+3. **Run setup as a gated agent flow** (each gate = one explicit user question; never invent answers):
+   1. **Source gate.** Run `python3 -m wisprsync doctor` to list discovered Wispr Flow databases with `History` row counts. Show the candidates to the user and ask which one to use, accepting a custom path. If discovery returns nothing, ask the user for an explicit path.
+   2. **Output gate.** Propose `../wispr_sync` (sibling of the repo) as the default. Ask the user to confirm or supply their own path. If their answer resolves inside the WisprSync repo, warn explicitly that exported data should not be committed and re-confirm before proceeding.
+   3. **Screenshots gate.** Ask whether to include screenshots (default yes).
+   4. **Schedule gate.** Ask whether to install the daily midnight LaunchAgent (default no).
+   5. **Review gate.** Show source, resolved output, screenshots, schedule, and config path back to the user. Ask for confirmation before writing anything.
+4. Only after every gate is answered, invoke setup non-interactively with all values passed as flags:
+   ```sh
+   ./bin/setup --yes \
+     --source "<answer>" \
+     --output "<answer>" \
+     [--no-screenshots] [--schedule] [--allow-unsafe-output]
+   ```
+   Pass `--allow-unsafe-output` only when the user explicitly confirmed a repo-local output path at the output gate.
+5. If any gate is denied or the user aborts, do not run `./bin/setup`; report what was skipped.
+6. See `docs/20-implementation/99-appendix/10-setup-workflow.md` for source discovery rules, safety constraints, and the full CLI surface.
+7. Run `./bin/sync` to export and validate.
+8. Summarize counts from the configured output's `manifest.json` and the latest run report.
 
 ## References
 

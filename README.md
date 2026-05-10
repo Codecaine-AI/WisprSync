@@ -30,11 +30,9 @@ The longer project backstory is in [docs/00-foundation/10-backstory.md](docs/00-
 
 ## Export Modes
 
-The base export mode writes to a folder you specify.
+WisprSync writes to a folder you specify.
 
 The easiest sync setup is to choose a folder already handled by Dropbox, iCloud Drive, Google Drive, OneDrive, or a similar file sync tool.
-
-Git/GitHub sync is a separate optional layer: export to a folder first, then commit and push if you explicitly choose that workflow.
 
 ## Prerequisite
 
@@ -54,7 +52,7 @@ The preferred setup path is to open this repository with Codex and ask it to use
 Use the WisprSync skill to set this repository up on my computer, then run an initial sync and summarize the manifest counts.
 ```
 
-The skill guides Codex through the machine-local steps: confirm this repo root, discover the Wispr Flow SQLite database, write `.wisprsync/config.json`, run `./bin/sync`, validate the export, and summarize the latest run. This is preferred because the correct source database and output folder are local to each computer.
+The skill guides Codex through the machine-local steps: confirm this repo root, discover the Wispr Flow SQLite database, choose the export folder, write `.wisprsync/config.json`, run `./bin/sync`, validate the export, and summarize the latest run. This is preferred because the correct source database and output folder are local to each computer.
 
 From the repo root:
 
@@ -63,6 +61,18 @@ From the repo root:
 ./bin/sync
 ```
 
+Setup is assisted and confirm-before-write. 
+
+- Shows the repo root and config path
+- Lists discovered Wispr Flow databases with `History` row counts
+- Asks for the source and export directory
+- Displays the resolved destination
+- Then shows a final review before writing `.wisprsync/config.json`.
+
+The suggested folder is `../wispr_sync`, but you can choose any safe folder,
+including one already handled by iCloud Drive, Dropbox, Google Drive, or another
+sync tool.
+
 Useful internal commands:
 
 ```sh
@@ -70,6 +80,7 @@ python3 -m wisprsync setup
 python3 -m wisprsync sync
 python3 -m wisprsync export
 python3 -m wisprsync validate
+python3 -m wisprsync schedule install
 python3 -m wisprsync doctor
 ```
 
@@ -83,10 +94,11 @@ That file should stay local and ignored by Git.
 
 ## Output
 
-By default, WisprSync writes to `data/` unless configured otherwise.
+WisprSync writes to the folder selected during setup. The recommended default
+folder name is `wispr_sync`.
 
 ```text
-data/
+wispr_sync/
 ├── manifest.json
 ├── indexes/
 │   ├── history.jsonl
@@ -111,10 +123,21 @@ Files are omitted when the source row does not contain the corresponding value.
 - Do not commit `.wisprsync/config.json`.
 - WisprSync blocks unsafe output paths by default, including paths inside the
   source database directory, Wispr Flow app data, the repo root, or private
-  `.wisprsync` state. Use `--allow-unsafe-output` only for intentional expert
+  `.wisprsync` state. Interactive setup allows repo-local output only after a
+  warning and explicit confirmation; `.wisprsync/` and `.wisprsync-cache/`
+  remain blocked.
+- Noninteractive setup requires `--output`. `--yes` does not infer an output
+  folder. Use `--allow-unsafe-output` only for intentional scripted developer
   workflows.
-- Be careful publishing exported `data/`; it may contain private transcripts, URLs, screenshots, and audio.
-- Prefer a private repo or a private cloud-synced folder for personal exports.
+- Be careful publishing the export folder; it may contain private transcripts, URLs, screenshots, and audio.
+- Prefer a private cloud-synced folder for personal exports.
+
+## Future Extensions
+
+WisprSync does not currently commit, push, upload, or call webhooks. A future
+extension system could run user-defined actions after a successful folder sync,
+such as pushing to GitHub or calling a local automation script, but that is not
+part of the supported implementation today.
 
 ## Documentation
 
@@ -126,7 +149,6 @@ Key docs:
 - [Wispr Flow Source Shape](docs/10-system-design/10-data-structure/10-wispr-flow-source-shape.md)
 - [WisprSync Output Shape](docs/10-system-design/10-data-structure/20-wisprsync-output-shape.md)
 - [Folder Export](docs/10-system-design/20-exporting/10-folder-export.md)
-- [GitHub Git Export](docs/10-system-design/20-exporting/20-github-git-export.md)
 - [Setup Workflow](docs/20-implementation/99-appendix/10-setup-workflow.md)
 
 ## License

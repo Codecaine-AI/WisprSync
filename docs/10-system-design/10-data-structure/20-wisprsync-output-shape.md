@@ -172,7 +172,7 @@ records/unknown/unknown/unknown/unknown-time_{transcriptEntityId}/
 
 ## Indexes
 
-`indexes/history.jsonl` has one compact JSON object per `History` row. It is the default analysis input for Python, DuckDB, jq, SQLite import, or warehouse loading. Rows are sorted by `(timestamp_utc, id)`, use one JSON object per line, and use `null` for known missing values.
+`indexes/history.jsonl` has one compact JSON object per searchable transcript record. It includes current `History` rows and previously exported records that are now missing from the source database. Current rows use `source_status: "current"`; retained rows use `source_status: "missing_from_source"` and keep the last exported text, metadata path, media paths, and hashes.
 
 `indexes/dictionary.jsonl` is a full export of the current `Dictionary` table. It represents the latest dictionary state for the run rather than an append-only dictionary history.
 

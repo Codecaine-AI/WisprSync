@@ -6,7 +6,7 @@ depends-on: [10-system-design/10-data-structure/20-wisprsync-output-shape.md]
 
 # Folder Export
 
-Folder export is the base WisprSync behavior. It reads Wispr Flow data and writes the canonical export tree to the output directory the user specifies, usually `data/` or a folder inside a cloud-synced directory.
+Folder export is the base WisprSync behavior. It reads Wispr Flow data and writes the canonical export tree to the output directory the user specifies, usually a `wispr_sync` folder inside a cloud-synced directory.
 
 ---
 
@@ -37,10 +37,11 @@ For each run:
    - `formatted_transcript.txt` when `formattedText` exists
    - `audio.wav` when audio exists
    - `screenshot.png` when screenshots are enabled and a screenshot exists
-6. Write `indexes/history.jsonl`.
-7. Regenerate `indexes/dictionary.jsonl`.
-8. Write `manifest.json`.
-9. Write a run report under `runs/` and append a summary to `indexes/runs.jsonl`.
+6. Add previously exported records that are now missing from the source to `indexes/history.jsonl` as retained archive rows.
+7. Write `indexes/history.jsonl`.
+8. Regenerate `indexes/dictionary.jsonl`.
+9. Write `manifest.json`.
+10. Write a run report under `runs/` and append a summary to `indexes/runs.jsonl`.
 
 ## Record Identity
 
@@ -66,7 +67,7 @@ On repeat export:
 - same ID and same source hash: leave it alone,
 - same ID and changed source hash: replace the record files,
 - same ID but timestamp path changed: move the record after confirming the existing `metadata.json` has the same ID,
-- exported ID missing from the source database: report it in the run report, but do not delete it by default.
+- exported ID missing from the source database: keep the record directory, report it in the run report, and keep it in `indexes/history.jsonl` with `source_status: "missing_from_source"`.
 
 ## Hashes
 
@@ -93,5 +94,8 @@ The exporter should stop instead of guessing if it sees an unsafe state:
 - duplicate IDs in `indexes/history.jsonl`.
 
 These are hard failures because choosing a winner could corrupt the exported data.
-Expert users can pass `--allow-unsafe-output` to intentionally use an
-unsafe-looking output location, except when the output path is already a file.
+Interactive setup may allow an output directory inside the WisprSync repository
+after a warning and explicit confirmation, but the repo root itself and private
+`.wisprsync/` and `.wisprsync-cache/` directories remain blocked. Expert users
+can pass `--allow-unsafe-output` to intentionally use an unsafe-looking output
+location in scripted workflows, except when the output path is already a file.

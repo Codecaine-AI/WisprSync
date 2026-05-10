@@ -23,8 +23,13 @@ Example:
 {
   "schema_version": 1,
   "source_database": "/Users/example/Library/Application Support/Wispr Flow/flow.sqlite",
-  "output_directory": "data",
-  "include_screenshots": true
+  "output_directory": "/Users/example/Documents/wispr_sync",
+  "include_screenshots": true,
+  "schedule": {
+    "enabled": false,
+    "provider": "launchd",
+    "local_time": "00:00"
+  }
 }
 ```
 
@@ -83,17 +88,35 @@ Expected repo-local commands:
 
 `./bin/setup`:
 
-- discovers the source database,
-- chooses or confirms the output directory,
-- defaults output to `data`,
+- prints the repository root and target `.wisprsync/config.json` path,
+- discovers candidate source databases and shows their paths and `History` row counts,
+- asks the user which source database to use, while accepting a custom path,
+- asks where exported files should go before any sync runs,
+- suggests `../wispr_sync` as the default output location,
+- resolves and displays the exact output path,
+- asks before using a destination that does not exist,
+- warns before using a repo-local output path and requires explicit confirmation,
+- keeps `.wisprsync/` and `.wisprsync-cache/` blocked,
+- asks whether to include screenshots and whether to install a daily schedule,
 - defaults screenshots to enabled,
-- writes `.wisprsync/config.json`.
+- shows a final review of source, output, screenshots, schedule, and config path,
+- writes `.wisprsync/config.json` only after `Write this config? [Y/n]` is accepted.
+
+Automation is stricter than interactive setup. Noninteractive setup, including
+`--yes`, requires `--output`; it never silently infers an output directory.
+Scripted developer workflows can still pass `--allow-unsafe-output`, but an
+output path that already exists as a file remains non-overridable.
 
 `./bin/sync`:
 
 - runs export,
-- runs validation,
-- does not commit or push unless explicitly requested.
+- runs validation.
+
+`./bin/schedule install`:
+
+- writes a macOS LaunchAgent,
+- runs repo-local `./bin/wispr_sync_runner`,
+- defaults to daily at 00:00 local time.
 
 Internally, these call the package module:
 
@@ -102,6 +125,7 @@ python3 -m wisprsync setup
 python3 -m wisprsync sync
 python3 -m wisprsync export
 python3 -m wisprsync validate
+python3 -m wisprsync schedule install
 python3 -m wisprsync doctor
 ```
 
@@ -115,4 +139,4 @@ Scheduling should call repo-local commands from this repository, for example:
 cd /path/to/WisprSync && ./bin/sync
 ```
 
-On macOS, `launchd` is the preferred scheduler for user-session reliability. A scheduling helper can be added separately; normal export behavior does not depend on scheduled execution.
+On macOS, `launchd` is the preferred scheduler for user-session reliability. The scheduler installs a user LaunchAgent named `com.codecaine.wispr_sync_runner` that runs the repo-local `bin/wispr_sync_runner` command at midnight.
