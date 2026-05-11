@@ -1,19 +1,97 @@
 from __future__ import annotations
 
+import shlex
 import subprocess
+import venv
 from pathlib import Path
 
 from wisprsync.core.errors import WisprSyncError
 
 LABEL = "com.codecaine.wispr_sync_runner"
 LEGACY_LABELS = ("com.codecaine.wisprsync",)
+RUNNER_APP_NAME = "WisprSync Runner.app"
+RUNNER_BUNDLE_ID = "com.codecaine.WisprSyncRunner"
+RUNNER_EXECUTABLE_NAME = "wisprsync-runner"
+RUNNER_VENV_NAME = "runner-venv"
 
 
 def launch_agent_path(label: str = LABEL) -> Path:
     return Path.home() / "Library" / "LaunchAgents" / f"{label}.plist"
 
 
+def runner_app_path(root: Path) -> Path:
+    return root / ".wisprsync" / RUNNER_APP_NAME
+
+
+def runner_executable_path(root: Path) -> Path:
+    return runner_app_path(root) / "Contents" / "MacOS" / RUNNER_EXECUTABLE_NAME
+
+
+def runner_python_path(root: Path) -> Path:
+    return root / ".wisprsync" / RUNNER_VENV_NAME / "bin" / "python"
+
+
+def install_runner_runtime(root: Path) -> Path:
+    python = runner_python_path(root)
+    if not python.exists():
+        venv.EnvBuilder(with_pip=False, symlinks=False).create(python.parent.parent)
+    return python
+
+
+def render_runner_info_plist() -> str:
+    return f"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleExecutable</key>
+  <string>{RUNNER_EXECUTABLE_NAME}</string>
+  <key>CFBundleIdentifier</key>
+  <string>{RUNNER_BUNDLE_ID}</string>
+  <key>CFBundleInfoDictionaryVersion</key>
+  <string>6.0</string>
+  <key>CFBundleName</key>
+  <string>WisprSync Runner</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>LSBackgroundOnly</key>
+  <true/>
+</dict>
+</plist>
+"""
+
+
+def render_runner_script(root: Path, python_executable: Path) -> str:
+    return f"""#!/bin/sh
+set -eu
+cd {shlex.quote(str(root))}
+exec {shlex.quote(str(python_executable))} -m wisprsync sync "$@"
+"""
+
+
+def install_runner_app(root: Path, python_executable: Path | None = None) -> Path:
+    app = runner_app_path(root)
+    contents = app / "Contents"
+    macos = contents / "MacOS"
+    macos.mkdir(parents=True, exist_ok=True)
+    (contents / "Info.plist").write_text(render_runner_info_plist(), encoding="utf-8")
+    executable = macos / RUNNER_EXECUTABLE_NAME
+    python = python_executable or install_runner_runtime(root)
+    executable.write_text(
+        render_runner_script(root, python),
+        encoding="utf-8",
+    )
+    executable.chmod(0o755)
+    return app
+
+
 def render_launch_agent(root: Path) -> str:
+    executable = runner_executable_path(root)
     return f"""<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -22,7 +100,7 @@ def render_launch_agent(root: Path) -> str:
   <string>{LABEL}</string>
   <key>ProgramArguments</key>
   <array>
-    <string>{root / "bin" / "wispr_sync_runner"}</string>
+    <string>{executable}</string>
   </array>
   <key>WorkingDirectory</key>
   <string>{root}</string>
@@ -45,6 +123,7 @@ def render_launch_agent(root: Path) -> str:
 def install_launch_agent(root: Path) -> Path:
     path = launch_agent_path()
     path.parent.mkdir(parents=True, exist_ok=True)
+    install_runner_app(root)
     for legacy_label in LEGACY_LABELS:
         legacy_path = launch_agent_path(legacy_label)
         if legacy_path.exists():

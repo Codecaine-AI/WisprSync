@@ -84,6 +84,11 @@ python3 -m wisprsync schedule install
 python3 -m wisprsync doctor
 ```
 
+The macOS schedule uses a private `.wisprsync/runner-venv` runtime and a
+dedicated `.wisprsync/WisprSync Runner.app` launcher, so privacy access can be
+granted to the scheduled WisprSync runner instead of a shared Python
+interpreter.
+
 Local machine config is written to:
 
 ```text

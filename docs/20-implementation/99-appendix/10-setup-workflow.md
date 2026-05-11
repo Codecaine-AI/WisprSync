@@ -115,7 +115,9 @@ output path that already exists as a file remains non-overridable.
 `./bin/schedule install`:
 
 - writes a macOS LaunchAgent,
-- runs repo-local `./bin/wispr_sync_runner`,
+- creates a private no-pip `.wisprsync/runner-venv` runtime,
+- creates a dedicated `.wisprsync/WisprSync Runner.app` launcher,
+- runs that dedicated launcher from the LaunchAgent,
 - defaults to daily at 00:00 local time.
 
 Internally, these call the package module:
@@ -139,4 +141,13 @@ Scheduling should call repo-local commands from this repository, for example:
 cd /path/to/WisprSync && ./bin/sync
 ```
 
-On macOS, `launchd` is the preferred scheduler for user-session reliability. The scheduler installs a user LaunchAgent named `com.codecaine.wispr_sync_runner` that runs the repo-local `bin/wispr_sync_runner` command at midnight.
+On macOS, `launchd` is the preferred scheduler for user-session reliability. The scheduler installs a user LaunchAgent named `com.codecaine.wispr_sync_runner` that runs `.wisprsync/WisprSync Runner.app/Contents/MacOS/wisprsync-runner` at midnight.
+
+The dedicated runner app exists so macOS privacy access can be granted to
+WisprSync's local scheduled runner instead of granting Full Disk Access to a
+shared Python interpreter. The runner app executes the private
+`.wisprsync/runner-venv/bin/python` copy created during schedule installation.
+
+See [macOS Scheduler Permissions](20-macos-scheduler-permissions.md) for the
+implementation details, runtime paths, verification commands, and failure-mode
+notes.

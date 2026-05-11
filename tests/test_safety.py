@@ -13,7 +13,7 @@ from wisprsync.cli.commands import command_cleanup_repo_data, command_setup, com
 from wisprsync.cli.main import build_parser
 from wisprsync.core.constants import HISTORY_COLUMNS
 from wisprsync.core.errors import WisprSyncError
-from wisprsync.sync.schedule import LABEL, render_launch_agent
+from wisprsync.sync.schedule import LABEL, render_launch_agent, runner_executable_path
 from wisprsync.core.safety import ensure_child, unsafe_output_reasons, validate_export_paths
 
 
@@ -480,7 +480,7 @@ class SafetyTests(unittest.TestCase):
         rendered = render_launch_agent(root)
 
         self.assertIn(LABEL, rendered)
-        self.assertIn(str(root / "bin" / "wispr_sync_runner"), rendered)
+        self.assertIn(str(runner_executable_path(root)), rendered)
         self.assertIn("<key>Hour</key>", rendered)
         self.assertIn("<integer>0</integer>", rendered)
 
