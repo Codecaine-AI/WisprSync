@@ -32,7 +32,11 @@ The longer project backstory is in [docs/00-foundation/10-backstory.md](docs/00-
 
 WisprSync writes to a folder you specify.
 
-The easiest sync setup is to choose a folder already handled by Dropbox, iCloud Drive, Google Drive, OneDrive, or a similar file sync tool.
+The recommended approach is to point WisprSync at a folder already handled by
+Dropbox, iCloud Drive, Google Drive, OneDrive, or a similar file sync tool.
+
+Combined with the scheduled nightly sync, your transcripts are automatically
+backed up to your cloud provider each night without any manual steps.
 
 ## Prerequisite
 
@@ -136,13 +140,6 @@ Files are omitted when the source row does not contain the corresponding value.
   workflows.
 - Be careful publishing the export folder; it may contain private transcripts, URLs, screenshots, and audio.
 - Prefer a private cloud-synced folder for personal exports.
-
-## Future Extensions
-
-WisprSync does not currently commit, push, upload, or call webhooks. A future
-extension system could run user-defined actions after a successful folder sync,
-such as pushing to GitHub or calling a local automation script, but that is not
-part of the supported implementation today.
 
 ## Documentation
 
