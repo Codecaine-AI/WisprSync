@@ -13,7 +13,7 @@ The source-to-record mapping lives in the exporter and record helper modules. It
 
 ## Source Selection
 
-`wisprsync/source/sqlite.py` defines read-only SQLite access and snapshot creation. `wisprsync/source/discovery.py` checks the known macOS database candidates and ranks valid Wispr Flow databases by `History` row count. `history_select_sql()` in `wisprsync/source/history.py` selects the configured `HISTORY_COLUMNS` in timestamp and ID order.
+`wisprsync/source/sqlite.py` defines read-only SQLite access, snapshot creation, and local snapshot retention. After each successful non-dry-run export, WisprSync keeps the latest source snapshot under `.wisprsync-cache/source-backups/` and prunes older local snapshots. `wisprsync/source/discovery.py` checks the known macOS database candidates and ranks valid Wispr Flow databases by `History` row count. `history_select_sql()` in `wisprsync/source/history.py` selects the configured `HISTORY_COLUMNS` in timestamp and ID order.
 
 The exported `History` columns are listed in `wisprsync/core/constants.py`. They include identity, transcript text variants, status, app context, media blobs, quality fields, edit fields, language, platform, and timing fields.
 

@@ -55,6 +55,7 @@ bin/sync
         │   ├── preflight source and existing records
         │   ├── build/write records
         │   ├── write indexes and manifest
+        │   ├── prune older local source snapshots
         │   └── write run report
         └── wisprsync.validate.runner.command_validate()
 ```

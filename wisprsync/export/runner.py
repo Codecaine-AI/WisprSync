@@ -20,7 +20,7 @@ from wisprsync.export.indexes import (
 from wisprsync.export.metadata import build_metadata
 from wisprsync.export.records import existing_source_hash, preflight_source, record_parts, write_record
 from wisprsync.source.history import history_select_sql, row_to_plain_dict
-from wisprsync.source.sqlite import connect_readonly, create_snapshot, has_table
+from wisprsync.source.sqlite import connect_readonly, create_snapshot, has_table, prune_source_backups
 from wisprsync.support.json import write_json, write_jsonl
 from wisprsync.support.time import compact_ts, iso_z, parse_timestamp, utc_now
 
@@ -218,6 +218,10 @@ def command_export(args: Any) -> int:
                 write_json(output / "manifest.json", manifest)
 
             run_report["status"] = "dry_run" if args.dry_run else "success"
+        if run_report["status"] == "success" and snapshot_mode == "sqlite_backup":
+            removed_backups = prune_source_backups(root, keep=1)
+            run_report["source_snapshot"]["local_retention_keep"] = 1
+            run_report["source_snapshot"]["local_retention_pruned_files"] = len(removed_backups)
     except Exception as exc:
         run_report["status"] = "failed"
         run_report["results"]["errors"] += 1

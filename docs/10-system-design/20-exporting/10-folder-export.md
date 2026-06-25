@@ -41,7 +41,8 @@ For each run:
 7. Write `indexes/history.jsonl`.
 8. Regenerate `indexes/dictionary.jsonl`.
 9. Write `manifest.json`.
-10. Write a run report under `runs/` and append a summary to `indexes/runs.jsonl`.
+10. Prune older repo-local source snapshots, keeping the latest successful backup.
+11. Write a run report under `runs/` and append a summary to `indexes/runs.jsonl`.
 
 ## Record Identity
 

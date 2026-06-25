@@ -6,6 +6,7 @@ import json
 import sqlite3
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 from unittest import mock
 
@@ -473,6 +474,45 @@ class SafetyTests(unittest.TestCase):
             self.assertEqual(manifest["counts"]["active_records"], 1)
             self.assertEqual(manifest["counts"]["retained_missing_from_source_records"], 1)
             self.assertEqual(manifest["counts"]["total_records"], 2)
+
+    def test_successful_sync_prunes_source_backups_to_latest(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "repo"
+            source = Path(tmp) / "app-data" / "flow.sqlite"
+            output = Path(tmp) / "wispr_sync"
+            backup_dir = root / ".wisprsync-cache" / "source-backups"
+            root.mkdir()
+            source.parent.mkdir()
+            self._create_full_history_db(source, ["one"])
+            args = argparse.Namespace(
+                source=str(source),
+                output=str(output),
+                include_screenshots=False,
+                no_screenshots=False,
+                dry_run=False,
+                limit=None,
+                allow_unsafe_output=False,
+            )
+
+            times = [
+                datetime(2026, 5, 10, tzinfo=timezone.utc),
+                datetime(2026, 5, 10, 0, 0, 1, tzinfo=timezone.utc),
+                datetime(2026, 5, 11, tzinfo=timezone.utc),
+                datetime(2026, 5, 11, 0, 0, 1, tzinfo=timezone.utc),
+            ]
+
+            with mock.patch("wisprsync.export.runner.repo_root", return_value=root):
+                with mock.patch("wisprsync.validate.runner.repo_root", return_value=root):
+                    with mock.patch("wisprsync.export.runner.utc_now", side_effect=times):
+                        self.assertEqual(command_sync(args), 0)
+                        (backup_dir / "20260510T000000.000Z.sqlite-wal").write_text("", encoding="utf-8")
+                        (backup_dir / "20260510T000000.000Z.sqlite-shm").write_text("", encoding="utf-8")
+                        self.assertEqual(command_sync(args), 0)
+
+            backup_files = sorted(path.name for path in backup_dir.iterdir())
+            sqlite_backups = [name for name in backup_files if name.endswith(".sqlite")]
+            self.assertEqual(sqlite_backups, ["20260511T000000.000Z.sqlite"])
+            self.assertFalse(any(name.startswith("20260510T000000.000Z") for name in backup_files))
 
     def test_launch_agent_renders_midnight_repo_local_sync(self) -> None:
         root = Path("/tmp/WisprSync")
